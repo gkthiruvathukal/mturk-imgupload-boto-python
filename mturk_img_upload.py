@@ -7,21 +7,22 @@
 
 import sys
 import os
+import argparse
 
 from boto.mturk.connection import MTurkConnection
 from boto.mturk.question import QuestionContent,Question,QuestionForm, Overview, \
      AnswerSpecification,SelectionAnswer,FormattedContent,FreeTextAnswer,FileUploadAnswer
  
-# TODO: These can be done at the command line via argparse.
+def parseCommandLine():
+   parser = argparse.ArgumentParser()
+   parser.add_argument('--access_id', type=str, default=os.environ.get("MTURK_ACCESS_ID"), help="access key")
+   parser.add_argument('--secret_key', type=str, default=os.environ.get("MTURK_SECRET_KEY"), help="secret key")
+   parser.add_argument('--images', type=str, default=None, help="file containing ID,URL pairs")
+   parser.add_argument('--pretend', action='store_true', help="show what would be done; don't do it")
+   options = parser.parse_args()
+   print(options)
+   return options
 
-ACCESS_ID=os.environ.get("MTURK_ACCESS_ID")
-SECRET_KEY=os.environ.get("MTURK_SECRET_KEY")
-
-if ACCESS_ID == None or SECRET_KEY == None:
-   print("missing AWS credentials")
-   sys.exit(1)
-
-HOST = 'mechanicalturk.amazonaws.com'
 
 def create_question_form(mtc, uuid, url):
    title = 'Test HIT Toothless id %(uuid)s- PLEASE DO NOT WORK ON THIS HIT' % vars()
@@ -66,20 +67,32 @@ def create_question_form(mtc, uuid, url):
 # Main
 
 def go():
+   options = parseCommandLine()
+   ACCESS_ID = options.access_id
+   SECRET_KEY = options.secret_key
+
+   if ACCESS_ID == None or SECRET_KEY == None:
+      print("missing AWS credentials")
+      sys.exit(1)
+
+   if options.images == None:
+      print("no image file specified")
+      sys.exit(2)
+
+   HOST = 'mechanicalturk.amazonaws.com'
+
    mtc = MTurkConnection(aws_access_key_id=ACCESS_ID,
                       aws_secret_access_key=SECRET_KEY,
                       host=HOST)
-   # TODO: Read this from an input file. Still in proof of concept stage here.
-   images = [
-     ("tooth quick check", "https://dl.dropboxusercontent.com/u/35094868/DSCN3493m.JPG"),
-#     ("tooth 2", "https://dl.dropboxusercontent.com/u/35094868/DSCN4170m.JPG"),
-#     ("tooth 3", "https://dl.dropboxusercontent.com/u/35094868/DSCN5797m.JPG")
-   ]
-
-   for (uuid, url) in images:
-      print("creating HIT with for %(uuid)s" % vars())
-      create_question_form(mtc, uuid, url)
-   print("Have a nice day!")
+   with open(options.images) as infile:
+      for line in infile:
+         (uuid,url) = line.split(',')[:2]  # comma-separated; only 2 fields
+         print(uuid + "=" + url)
+         if options.pretend:
+            print("creating HIT with for %(uuid)s" % vars())
+         else:
+            create_question_form(mtc, uuid, url)
+      print("Have a nice day!")
       
 if __name__ == '__main__':
    go()
