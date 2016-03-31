@@ -25,18 +25,11 @@ HOST = 'mechanicalturk.amazonaws.com'
 
 def create_question_form(mtc, uuid, url):
    title = 'Test HIT Toothless id %(uuid)s- PLEASE DO NOT WORK ON THIS HIT' % vars()
-   description = ('Visit a website and give us your opinion about'
-               ' the design and also some personal comments')
-   keywords = 'website, rating, opinions'
- 
-   ratings =[('Very Bad','-2'),
-         ('Bad','-1'),
-         ('Not bad','0'),
-         ('Good','1'),
-         ('Very Good','1')]
+   description = ('Help us extract a polygon from this research image.')
+   keywords = 'image, extraction, gimp'
  
    overview = Overview()
-   overview.append_field('Title', 'Give your opinion on this website')
+   overview.append_field('Title', 'Instructions')
 
    # Overview text is where we'll put the details about the HIT
    # img previews the tooth image
