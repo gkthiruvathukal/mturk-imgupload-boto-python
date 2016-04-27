@@ -52,7 +52,7 @@ def create_question_form(mtc, uuid, url):
       <p>For the HIT to be complete, you must upload a the black polygon against
       a white background. The image size must match the original image size.</p>
 
-      <p>Image download URL: <br/>s
+      <p>Image download URL: <br/>
          <a href="%(url)s">
             <img src="%(url)s" alt="direct link to image %(uuid)s"/>
          </a>
