@@ -44,8 +44,8 @@ def create_question_form(mtc, uuid, url):
       be downloaded from
       <a href="https://www.gimp.org/downloads/">https://www.gimp.org/downloads/</a></p>
 
-      <p>We have prepared a video at <a href="https://www.youtube.com/embed/nzxZqIp3XZY">
-      youtube.com/embed/nzxZqIp3XZY</a> showing how to do the task. Once you have extracted
+      <p>We have prepared a video at <a href="https://www.youtube.com/watch?v=nzxZqIp3XZY">
+      https://www.youtube.com/watch?v=nzxZqIp3XZY</a> showing how to do the task. Once you have extracted
       the outline, you will upload the final result (file) to this HIT.
       </p>
       
