@@ -8,6 +8,7 @@
 import sys
 import os
 import argparse
+import csv
 
 from boto.mturk.connection import MTurkConnection
 from boto.mturk.question import QuestionContent,Question,QuestionForm, Overview, \
@@ -25,7 +26,7 @@ def parseCommandLine():
 
 
 def create_question_form(mtc, uuid, url):
-   title = 'Test HIT Toothless id %(uuid)s- PLEASE DO NOT WORK ON THIS HIT' % vars()
+   title = 'Bovid Labs HIT %(uuid)s - Batch 1' % vars()
    description = ('Help us extract a polygon from this research image.')
    keywords = 'image, extraction, gimp'
  
@@ -37,11 +38,25 @@ def create_question_form(mtc, uuid, url):
    # a allows user to download the image and save as
 
    text = """
-      Here is a tooth for you to modify using Gimp. Instructional video URL to to HERE.
+      <p>Your job is to extract the outline of the tooth in the following image.</p>
+      
+      <p>You need to install the current version of Gimp on your computer. It can
+      be downloaded from
+      <a href="https://www.gimp.org/downloads/">https://www.gimp.org/downloads/</a></p>
 
-      <a href="%(url)s">
-         <img src="%(url)s" alt="download %(uuid)s"/>
-      </a>
+      <p>We have prepared a video at <a href="https://www.youtube.com/embed/nzxZqIp3XZY">
+      youtube.com/embed/nzxZqIp3XZY</a> showing how to do the task. Once you have extracted
+      the outline, you will upload the final result (file) to this HIT.
+      </p>
+      
+      <p>For the HIT to be complete, you must upload a the black polygon against
+      a white background. The image size must match the original image size.</p>
+
+      <p>Image download URL: <br/>s
+         <a href="%(url)s">
+            <img src="%(url)s" alt="direct link to image %(uuid)s"/>
+         </a>
+      </p>
       """ % vars()
 
    overview.append(FormattedContent(text))
@@ -62,7 +77,7 @@ def create_question_form(mtc, uuid, url):
  
    # TODO: We want to separate creation of form from uploading the hit
    # need to factor out arguments....
-   mtc.create_hit(questions=question_form, max_assignments=1, title=title, description=description, keywords=keywords, duration = 60*5, reward=0.01)
+   mtc.create_hit(questions=question_form, max_assignments=1, title=title, description=description, keywords=keywords, duration = 60*30, reward=0.10)
  
 # Main
 
@@ -85,12 +100,16 @@ def go():
                       aws_secret_access_key=SECRET_KEY,
                       host=HOST)
    with open(options.images) as infile:
-      for line in infile:
-         (uuid,url) = line.split(',')[:2]  # comma-separated; only 2 fields
+      reader = csv.DictReader(infile)
+      for row in reader:
+         id = row['id']
+         uuid = row['filename']
+         url = row['url']
          print(uuid + "=" + url)
          if options.pretend:
-            print("creating HIT with for %(uuid)s" % vars())
+            print("pretending to upload HIT with for %(uuid)s" % vars())
          else:
+            print("uploading HIT with for %(uuid)s" % vars())
             create_question_form(mtc, uuid, url)
       print("Have a nice day!")
       
