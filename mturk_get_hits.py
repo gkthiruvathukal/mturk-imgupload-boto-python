@@ -11,6 +11,7 @@ import os.path
 import argparse
 import csv
 import pycurl
+import magic
 from StringIO import StringIO
 
 from boto.mturk.connection import MTurkConnection
@@ -22,7 +23,9 @@ def parseCommandLine():
    parser = argparse.ArgumentParser()
    parser.add_argument('--access_id', type=str, default=os.environ.get("MTURK_ACCESS_ID"), help="access key")
    parser.add_argument('--secret_key', type=str, default=os.environ.get("MTURK_SECRET_KEY"), help="secret key")
-   parser.add_argument('--pretend', action='store_true', help="show what would be done; don't do it")
+   parser.add_argument('--accept', action='store_true', default=False, help="approve assignments that meet our requirements")
+   parser.add_argument('--reject', action='store_true', default=False, help="reject assignments that don't meet our requirements")
+   parser.add_argument('--download', action='store_true', default=False, help="reject assignments that don't meet our requirements")
    options = parser.parse_args()
    print(options)
    return options
@@ -65,7 +68,12 @@ def go():
                       host=HOST)
 
    results_dir = "./results"
-   hits = mtc.get_all_hits()
+ 
+   magic_extension_map = {
+     'JPEG' : '.jpeg',
+     'PNG' : '.png'
+   }
+
    for hit in mtc.get_all_hits():
       title = hit.Title.lower()
       tokens = title.split()
@@ -80,12 +88,32 @@ def go():
          os.makedirs(output_dir)
       
       for assignment in mtc.get_assignments(hit.HITId):
-          assignment_filename = assignment.AssignmentId + ".png"
+          assignment_filename = assignment.AssignmentId
           output_filename = os.path.join(output_dir, assignment_filename)
           url = get_file_upload_url_only(mtc, assignment.AssignmentId)
           if url:
-             bytes_written = curl_url_to_output_file(url, output_filename)
-             print(url + " bytes: %d " % bytes_written)
+             if options.download:
+                bytes_written = curl_url_to_output_file(url, output_filename)
+                magic_info = magic.from_file(output_filename)
+                magic_type = magic_info.split()[0]
+                add_extension = magic_extension_map.get(magic_type, '.dat')
+
+                # If we don't get .png, .jpeg, we really can't use the files.
+
+                if add_extension == '.dat':
+                   if options.reject:
+                      mtc.reject_assignment(assignment.AssignmentId, "We require a .png file as a result. You submitted " + magic_type)
+                   else:
+                      print("   Use --reject to reject" + assignment.AssignmentId) 
+                else:
+                   if options.accept:
+                      mtc.accept_assignment(assignment.AssignmentId)
+                   else:
+                      print("   Use --accept to accept " + assignment.AssignmentId) 
+                   os.rename(output_filename, output_filename + add_extension)
+           
+             else:
+                print("   Use --downlaod to fetch " + url)
 
 
       
