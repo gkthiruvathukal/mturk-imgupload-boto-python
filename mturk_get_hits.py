@@ -5,19 +5,16 @@
 # inspiration!
 #
 
-import sys
-import os
-import os.path
 import argparse
 import csv
-import pycurl
 import magic
+import os
+import os.path
+import pycurl
+import sys
 from StringIO import StringIO
 
 from boto.mturk.connection import MTurkConnection
-from boto.mturk.question import QuestionContent,Question,QuestionForm, Overview, \
-     AnswerSpecification,SelectionAnswer,FormattedContent,FreeTextAnswer,FileUploadAnswer
- 
 
 def parseCommandLine():
    parser = argparse.ArgumentParser()
@@ -115,7 +112,7 @@ def go():
                    os.rename(output_filename, output_filename + add_extension)
            
              else:
-                print("   Use --downlaod to fetch " + url)
+                print("   Use --download to fetch " + url)
 
    print("Total hits: %d" % hit_count)
 
