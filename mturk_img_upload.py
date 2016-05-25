@@ -26,7 +26,7 @@ def parseCommandLine():
 
 
 def create_question_form(mtc, uuid, url):
-   title = 'Bovid Labs HIT %(uuid)s - Batch 1' % vars()
+   title = 'Bovid Labs HIT %(uuid)s' % vars()
    description = ('Help us extract a polygon from this research image.')
    keywords = 'image, extraction, gimp'
  
@@ -76,8 +76,13 @@ def create_question_form(mtc, uuid, url):
    question_form.append(q1)
  
    # TODO: We want to separate creation of form from uploading the hit
-   # need to factor out arguments....
-   mtc.create_hit(questions=question_form, max_assignments=1, title=title, description=description, keywords=keywords, duration = 60*30, reward=0.10)
+   # need to factor out arguments....  
+   # duration and lifetime are in seconds. 
+   # we will give 30 minutes duration (30 * 60) to complete the task
+   # we will keep these hits around for 14 days (14 * 24 * 60 * 60)
+   print(question_form.get_as_xml())
+   mtc.create_hit(questions=question_form, max_assignments=3, title=title, description=description, keywords=keywords,
+      duration = 60*30, lifetime = 14 * 24 * 60 * 60, reward=0.10)
  
 # Main
 
