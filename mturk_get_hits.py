@@ -74,7 +74,9 @@ def go():
      'PNG' : '.png'
    }
 
+   hit_count = 0
    for hit in mtc.get_all_hits():
+      hit_count = hit_count + 1
       title = hit.Title.lower()
       tokens = title.split()
       original_name = None
@@ -115,6 +117,7 @@ def go():
              else:
                 print("   Use --downlaod to fetch " + url)
 
+   print("Total hits: %d" % hit_count)
 
       
 if __name__ == '__main__':
