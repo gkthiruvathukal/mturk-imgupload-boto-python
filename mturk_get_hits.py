@@ -7,23 +7,47 @@
 
 import sys
 import os
+import os.path
 import argparse
 import csv
+import pycurl
+from StringIO import StringIO
 
 from boto.mturk.connection import MTurkConnection
 from boto.mturk.question import QuestionContent,Question,QuestionForm, Overview, \
      AnswerSpecification,SelectionAnswer,FormattedContent,FreeTextAnswer,FileUploadAnswer
  
+
 def parseCommandLine():
    parser = argparse.ArgumentParser()
    parser.add_argument('--access_id', type=str, default=os.environ.get("MTURK_ACCESS_ID"), help="access key")
    parser.add_argument('--secret_key', type=str, default=os.environ.get("MTURK_SECRET_KEY"), help="secret key")
-   parser.add_argument('--images', type=str, default=None, help="file containing ID,URL pairs")
    parser.add_argument('--pretend', action='store_true', help="show what would be done; don't do it")
    options = parser.parse_args()
    print(options)
    return options
 
+
+def get_file_upload_url_only(mtc, assignment_id):
+   try:
+      upload_url = mtc.get_file_upload_url(assignment_id, 'fileupload')
+      return upload_url[0].FileUploadURL
+   except:
+      return None
+
+def curl_url_to_output_file(url, output_path):
+
+   buffer = StringIO()
+   c = pycurl.Curl()
+   c.setopt(c.URL, url)
+   c.setopt(c.WRITEDATA, buffer)
+   c.perform()
+   c.close()
+
+   body = buffer.getvalue()
+   with open(output_path, "wb") as outfile:
+      outfile.write(body)
+   return len(body)
 
 def go():
    options = parseCommandLine()
@@ -39,25 +63,30 @@ def go():
    mtc = MTurkConnection(aws_access_key_id=ACCESS_ID,
                       aws_secret_access_key=SECRET_KEY,
                       host=HOST)
+
+   results_dir = "./results"
    hits = mtc.get_all_hits()
-
-   for k in dir(mtc):
-      print(k)
-   sys.exit(1)
    for hit in mtc.get_all_hits():
-      hitMax = int(hit.MaxAssignments)
-      hitAvailable = int(hit.NumberOfAssignmentsAvailable)
-      if hitMax != hitAvailable:
-         print(dir(hit))
-         print(hit.HITId + " " + hit.Title + " " +  hit.HITStatus + " " + hit.NumberOfAssignmentsAvailable + "/" + hit.MaxAssignments)
-         assignments =  mtc.get_assignments(hit.HITId)
-         for assignment in assignments:
-            print(dir(assignment))
-            print(assignment.AssignmentId)
-            uploadURL = mtc.get_file_upload_url(assignment.AssignmentId, 'fileupload')
-            print(uploadURL)
+      title = hit.Title.lower()
+      tokens = title.split()
+      original_name = None
+      if tokens[-1].endswith('.jpg') or tokens[-1].endswith('.png'):
+         (basename, ext) = os.path.splitext(tokens[-1])
+      else:
+         print("Skipping HIT: " + hit.Title)
+         continue
+      output_dir = os.path.join(results_dir, basename)
+      if not os.path.exists(output_dir):
+         os.makedirs(output_dir)
+      
+      for assignment in mtc.get_assignments(hit.HITId):
+          assignment_filename = assignment.AssignmentId + ".png"
+          output_filename = os.path.join(output_dir, assignment_filename)
+          url = get_file_upload_url_only(mtc, assignment.AssignmentId)
+          if url:
+             bytes_written = curl_url_to_output_file(url, output_filename)
+             print(url + " bytes: %d " % bytes_written)
 
-#,Other parameters for get_assignments status=None, sort_by='SubmitTime', sort_direction='Ascending', page_size=10, page_number=1, response_groups=None)
 
       
 if __name__ == '__main__':
