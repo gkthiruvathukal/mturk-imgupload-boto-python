@@ -115,7 +115,7 @@ def go():
                    if options.reject:
                       mtc.reject_assignment(assignment.AssignmentId, "We require a .png file as a result. You submitted " + magic_type)
                    else:
-                      print("   Use --reject to reject" + assignment.AssignmentId) 
+                      print("   Use --reject to reject " + assignment.AssignmentId) 
                 else:
                    accept_count.next()
                    if options.accept:
