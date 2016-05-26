@@ -49,6 +49,12 @@ def curl_url_to_output_file(url, output_path):
       outfile.write(body)
    return len(body)
 
+def counter():
+   i = 0
+   while True:
+      yield i
+      i = i + 1
+
 def go():
    options = parseCommandLine()
    ACCESS_ID = options.access_id
@@ -71,9 +77,13 @@ def go():
      'PNG' : '.png'
    }
 
-   hit_count = 0
+   hit_count = counter()
+   assignment_count = counter()
+   accept_count = counter()
+   reject_count = counter()
+
    for hit in mtc.get_all_hits():
-      hit_count = hit_count + 1
+      hit_count.next()
       title = hit.Title.lower()
       tokens = title.split()
       original_name = None
@@ -87,6 +97,7 @@ def go():
          os.makedirs(output_dir)
       
       for assignment in mtc.get_assignments(hit.HITId):
+          assignment_count.next()
           assignment_filename = assignment.AssignmentId
           output_filename = os.path.join(output_dir, assignment_filename)
           url = get_file_upload_url_only(mtc, assignment.AssignmentId)
@@ -100,11 +111,13 @@ def go():
                 # If we don't get .png, .jpeg, we really can't use the files.
 
                 if add_extension == '.dat':
+                   reject_count.next()
                    if options.reject:
                       mtc.reject_assignment(assignment.AssignmentId, "We require a .png file as a result. You submitted " + magic_type)
                    else:
                       print("   Use --reject to reject" + assignment.AssignmentId) 
                 else:
+                   accept_count.next()
                    if options.accept:
                       mtc.accept_assignment(assignment.AssignmentId)
                    else:
@@ -114,7 +127,7 @@ def go():
              else:
                 print("   Use --download to fetch " + url)
 
-   print("Total hits: %d" % hit_count)
+   print("Total hits = %d; assignments = %d; accept = %d; reject = %d" % (hit_count.next(), assignment_count.next(), accept_count.next(), reject_count.next()))
 
       
 if __name__ == '__main__':
