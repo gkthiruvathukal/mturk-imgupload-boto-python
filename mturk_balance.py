@@ -15,5 +15,5 @@ mtc = MTurkConnection(aws_access_key_id=ACCESS_ID,
                       aws_secret_access_key=SECRET_KEY,
                       host=HOST)
  
-print mtc.get_account_balance()
+print(mtc.get_account_balance())
 
