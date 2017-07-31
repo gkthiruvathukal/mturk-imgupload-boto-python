@@ -1,6 +1,6 @@
 #
 # upload script with support for file upload HITs
-# 
+#
 # Thanks to http://www.toforge.com/2011/04/boto-mturk-tutorial-create-hits/ for
 # inspiration!
 #
@@ -11,33 +11,38 @@ import argparse
 import csv
 
 from boto.mturk.connection import MTurkConnection
-from boto.mturk.question import QuestionContent,Question,QuestionForm, Overview, \
-     AnswerSpecification,SelectionAnswer,FormattedContent,FreeTextAnswer,FileUploadAnswer
- 
+from boto.mturk.question import QuestionContent, Question, QuestionForm, Overview, \
+    AnswerSpecification, SelectionAnswer, FormattedContent, FreeTextAnswer, FileUploadAnswer
+
+
 def parseCommandLine():
-   parser = argparse.ArgumentParser()
-   parser.add_argument('--access_id', type=str, default=os.environ.get("MTURK_ACCESS_ID"), help="access key")
-   parser.add_argument('--secret_key', type=str, default=os.environ.get("MTURK_SECRET_KEY"), help="secret key")
-   parser.add_argument('--images', type=str, default=None, help="file containing ID,URL pairs")
-   parser.add_argument('--pretend', action='store_true', help="show what would be done; don't do it")
-   options = parser.parse_args()
-   print(options)
-   return options
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--access_id', type=str,
+                        default=os.environ.get("MTURK_ACCESS_ID"), help="access key")
+    parser.add_argument('--secret_key', type=str,
+                        default=os.environ.get("MTURK_SECRET_KEY"), help="secret key")
+    parser.add_argument('--images', type=str, default=None,
+                        help="file containing ID,URL pairs")
+    parser.add_argument('--pretend', action='store_true',
+                        help="show what would be done; don't do it")
+    options = parser.parse_args()
+    print(options)
+    return options
 
 
 def create_question_form(mtc, uuid, url):
-   title = 'Bovid Labs HIT %(uuid)s' % vars()
-   description = ('Help us extract a polygon from this research image.')
-   keywords = 'image, extraction, gimp'
- 
-   overview = Overview()
-   overview.append_field('Title', 'Instructions')
+    title = 'Bovid Labs HIT %(uuid)s' % vars()
+    description = ('Help us extract a polygon from this research image.')
+    keywords = 'image, extraction, gimp'
 
-   # Overview text is where we'll put the details about the HIT
-   # img previews the tooth image
-   # a allows user to download the image and save as
+    overview = Overview()
+    overview.append_field('Title', 'Instructions')
 
-   text = """
+    # Overview text is where we'll put the details about the HIT
+    # img previews the tooth image
+    # a allows user to download the image and save as
+
+    text = """
       <p>Your job is to extract the outline of the tooth in the following image.</p>
       
       <p>You need to install the current version of Gimp on your computer. It can
@@ -59,64 +64,65 @@ def create_question_form(mtc, uuid, url):
       </p>
       """ % vars()
 
-   overview.append(FormattedContent(text))
+    overview.append(FormattedContent(text))
 
-   qc1 = QuestionContent()
-   qc1.append_field('Title','File Upload Question')
+    qc1 = QuestionContent()
+    qc1.append_field('Title', 'File Upload Question')
 
-   fu1 = FileUploadAnswer(1024, 1024*1024*10)
+    fu1 = FileUploadAnswer(1024, 1024 * 1024 * 10)
 
-   q1 = Question(identifier="fileupload",
-              content=qc1,
-              answer_spec=AnswerSpecification(fu1))
+    q1 = Question(identifier="fileupload",
+                  content=qc1,
+                  answer_spec=AnswerSpecification(fu1))
 
- 
-   question_form = QuestionForm()
-   question_form.append(overview)
-   question_form.append(q1)
- 
-   # TODO: We want to separate creation of form from uploading the hit
-   # need to factor out arguments....  
-   # duration and lifetime are in seconds. 
-   # we will give 30 minutes duration (30 * 60) to complete the task
-   # we will keep these hits around for 14 days (14 * 24 * 60 * 60)
-   print(question_form.get_as_xml())
-   mtc.create_hit(questions=question_form, max_assignments=3, title=title, description=description, keywords=keywords,
-      duration = 60*30, lifetime = 14 * 24 * 60 * 60, reward=0.10)
- 
+    question_form = QuestionForm()
+    question_form.append(overview)
+    question_form.append(q1)
+
+    # TODO: We want to separate creation of form from uploading the hit
+    # need to factor out arguments....
+    # duration and lifetime are in seconds.
+    # we will give 30 minutes duration (30 * 60) to complete the task
+    # we will keep these hits around for 14 days (14 * 24 * 60 * 60)
+    print(question_form.get_as_xml())
+    mtc.create_hit(questions=question_form, max_assignments=3, title=title, description=description, keywords=keywords,
+                   duration=60 * 30, lifetime=14 * 24 * 60 * 60, reward=0.10)
+
 # Main
 
+
 def go():
-   options = parseCommandLine()
-   ACCESS_ID = options.access_id
-   SECRET_KEY = options.secret_key
+    options = parseCommandLine()
+    ACCESS_ID = options.access_id
+    SECRET_KEY = options.secret_key
 
-   if ACCESS_ID == None or SECRET_KEY == None:
-      print("missing AWS credentials")
-      sys.exit(1)
+    if ACCESS_ID == None or SECRET_KEY == None:
+        print("missing AWS credentials")
+        sys.exit(1)
 
-   if options.images == None:
-      print("no image file specified")
-      sys.exit(2)
+    if options.images == None:
+        print("no image file specified")
+        sys.exit(2)
 
-   HOST = 'mechanicalturk.amazonaws.com'
+    HOST = 'mechanicalturk.amazonaws.com'
 
-   mtc = MTurkConnection(aws_access_key_id=ACCESS_ID,
-                      aws_secret_access_key=SECRET_KEY,
-                      host=HOST)
-   with open(options.images) as infile:
-      reader = csv.DictReader(infile)
-      for row in reader:
-         id = row['id']
-         uuid = row['filename']
-         url = row['url']
-         print(uuid + "=" + url)
-         if options.pretend:
-            print("pretending to upload HIT with for %(uuid)s" % vars())
-         else:
-            print("uploading HIT with for %(uuid)s" % vars())
-            create_question_form(mtc, uuid, url)
-      print("Have a nice day!")
-      
+    mtc = MTurkConnection(aws_access_key_id=ACCESS_ID,
+                          aws_secret_access_key=SECRET_KEY,
+                          host=HOST)
+    with open(options.images) as infile:
+        reader = csv.DictReader(infile)
+        for row in reader:
+            id = row['id']
+            uuid = row['filename']
+            url = row['url']
+            print(uuid + "=" + url)
+            if options.pretend:
+                print("pretending to upload HIT with for %(uuid)s" % vars())
+            else:
+                print("uploading HIT with for %(uuid)s" % vars())
+                create_question_form(mtc, uuid, url)
+        print("Have a nice day!")
+
+
 if __name__ == '__main__':
-   go()
+    go()
