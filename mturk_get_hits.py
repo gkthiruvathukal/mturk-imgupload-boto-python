@@ -110,16 +110,19 @@ def go():
 
                 # If we don't get .png, .jpeg, we really can't use the files.
 
+                print("Processing assignment: " + assignment.AssignmentId)
                 if add_extension == '.dat':
                    reject_count.next()
                    if options.reject:
-                      mtc.reject_assignment(assignment.AssignmentId, "We require a .png file as a result. You submitted " + magic_type)
+                      print("   Rejecting " + assignment.AssignmentId) 
+                      mtc.reject_assignment(assignment.AssignmentId, "We require a .png file as a result per the instructions. You submitted " + magic_type)
                    else:
                       print("   Use --reject to reject " + assignment.AssignmentId) 
                 else:
                    accept_count.next()
                    if options.accept:
-                      mtc.accept_assignment(assignment.AssignmentId)
+                      print("   Accepting " + assignment.AssignmentId) 
+                      mtc.approve_assignment(assignment.AssignmentId)
                    else:
                       print("   Use --accept to accept " + assignment.AssignmentId) 
                    os.rename(output_filename, output_filename + add_extension)
