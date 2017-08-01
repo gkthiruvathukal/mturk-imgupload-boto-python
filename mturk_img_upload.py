@@ -31,7 +31,7 @@ def parseCommandLine():
 
 
 def create_question_form(mtc, uuid, url):
-    title = 'Bovid Labs HIT %(uuid)s' % vars()
+    title = 'Bovid Labs HIT v2017.07.31 - %(uuid)s' % vars()
     description = ('Help us extract a polygon from this research image.')
     keywords = 'image, extraction, gimp'
 
@@ -86,7 +86,7 @@ def create_question_form(mtc, uuid, url):
     # we will keep these hits around for 14 days (14 * 24 * 60 * 60)
     print(question_form.get_as_xml())
     mtc.create_hit(questions=question_form, max_assignments=3, title=title, description=description, keywords=keywords,
-                   duration=60 * 30, lifetime=14 * 24 * 60 * 60, reward=0.10)
+                   duration=60 * 30, lifetime=3 * 24 * 60 * 60, reward=0.10)
 
 # Main
 
