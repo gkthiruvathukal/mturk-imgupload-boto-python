@@ -27,10 +27,15 @@ def parseCommandLine():
                         help="approve assignments that meet our requirements")
     parser.add_argument('--reject', action='store_true', default=False,
                         help="reject assignments that don't meet our requirements")
+
+    parser.add_argument('--skip-approved', action='store_true', default=False,
+                        help="skip any assignment we've already accepted")
+    parser.add_argument('--skip-rejected', action='store_true', default=False,
+                        help="skip any assignment we've already rejected")
     parser.add_argument('--download', action='store_true', default=False,
-                        help="reject assignments that don't meet our requirements")
+                        help="download files")
     options = parser.parse_args()
-    print(options)
+    #print(options)
     return options
 
 
@@ -106,11 +111,20 @@ def go():
             os.makedirs(output_dir)
 
         for assignment in mtc.get_assignments(hit.HITId):
+            if options.skip_approved and assignment.AssignmentStatus == 'Approved':
+                continue
+
+            if options.skip_rejected and assignment.AssignmentStatus == 'Rejected':
+                continue
+       
+            print("Assignment Status %s" % assignment.AssignmentStatus)
             assignment_count.next()
             assignment_filename = assignment.AssignmentId
             output_filename = os.path.join(output_dir, assignment_filename)
             url = get_file_upload_url_only(mtc, assignment.AssignmentId)
-            if url:
+            if not url:
+                print("-> No URL found for %s" % assignment.AssignmentId)
+            else:
                 if options.download:
                     bytes_written = curl_url_to_output_file(
                         url, output_filename)
