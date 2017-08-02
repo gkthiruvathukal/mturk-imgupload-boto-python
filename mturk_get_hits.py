@@ -35,7 +35,7 @@ def parseCommandLine():
     parser.add_argument('--download', action='store_true', default=False,
                         help="download files")
     options = parser.parse_args()
-    #print(options)
+    # print(options)
     return options
 
 
@@ -116,7 +116,7 @@ def go():
 
             if options.skip_rejected and assignment.AssignmentStatus == 'Rejected':
                 continue
-       
+
             print("Assignment Status %s" % assignment.AssignmentStatus)
             assignment_count.next()
             assignment_filename = assignment.AssignmentId
@@ -126,9 +126,11 @@ def go():
                 reject_count.next()
                 if options.reject:
                     print("   Rejecting " + assignment.AssignmentId)
-                    mtc.reject_assignment(assignment.AssignmentId, "We require a downloadable file as a result per the instructions. No file found in your submission.")
+                    mtc.reject_assignment(
+                        assignment.AssignmentId, "We require a downloadable file as a result per the instructions. No file found in your submission.")
                 else:
-                    print("   No downloadable file found. Use --reject to reject " + assignment.AssignmentId)
+                    print(
+                        "   No downloadable file found. Use --reject to reject " + assignment.AssignmentId)
             else:
                 if options.download:
                     bytes_written = curl_url_to_output_file(
