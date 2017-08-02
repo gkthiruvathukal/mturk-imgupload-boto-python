@@ -123,7 +123,12 @@ def go():
             output_filename = os.path.join(output_dir, assignment_filename)
             url = get_file_upload_url_only(mtc, assignment.AssignmentId)
             if not url:
-                print("-> No URL found for %s" % assignment.AssignmentId)
+                reject_count.next()
+                if options.reject:
+                    print("   Rejecting " + assignment.AssignmentId)
+                    mtc.reject_assignment(assignment.AssignmentId, "We require a downloadable file as a result per the instructions. No file found in your submission.")
+                else:
+                    print("   No downloadable file found. Use --reject to reject " + assignment.AssignmentId)
             else:
                 if options.download:
                     bytes_written = curl_url_to_output_file(
